@@ -57,8 +57,7 @@ def init_db():
                   thoi_gian DATETIME,
                   FOREIGN KEY(user_id) REFERENCES taikhoan(id))''')
                   
-    # Tạo bảng goidichvu và donhang (Giữ nguyên như cũ của bạn)
-    # Sửa lệnh tạo bảng goidichvu (Thêm cột thoiHan INTEGER)
+    # Tạo bảng goidichvu và donhang 
     c.execute('''CREATE TABLE IF NOT EXISTS goidichvu 
                  (id INTEGER PRIMARY KEY AUTOINCREMENT, 
                   maGoi TEXT UNIQUE NOT NULL, 
@@ -66,7 +65,14 @@ def init_db():
                   giaCuoc REAL NOT NULL, 
                   moTa TEXT,
                   thoiHan INTEGER DEFAULT 30)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS donhang (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, goidichvu_id INTEGER, ngayTao DATETIME DEFAULT CURRENT_TIMESTAMP, trangThai TEXT DEFAULT 'Chờ thanh toán', tongTien REAL, FOREIGN KEY(user_id) REFERENCES taikhoan(id), FOREIGN KEY(goidichvu_id) REFERENCES goidichvu(id))''')
+    c.execute('''CREATE TABLE IF NOT EXISTS donhang 
+              (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+              user_id INTEGER, goidichvu_id INTEGER, 
+              ngayTao DATETIME DEFAULT CURRENT_TIMESTAMP, 
+              trangThai TEXT DEFAULT 'Chờ thanh toán', 
+              tongTien REAL, 
+              FOREIGN KEY(user_id) REFERENCES taikhoan(id), 
+              FOREIGN KEY(goidichvu_id) REFERENCES goidichvu(id))''')
 
     # TỰ ĐỘNG TẠO TÀI KHOẢN NHÂN VIÊN MẶC ĐỊNH
     admin_exist = c.execute("SELECT * FROM taikhoan WHERE role = 'nhanvien'").fetchone()
@@ -81,7 +87,7 @@ def init_db():
         c.execute("INSERT INTO taikhoan (username, password_hash, hoTen, role) VALUES (?, ?, ?, ?)", 
                   ('AdminOffical', hashed_pw, 'Tổng Quản Trị Hệ Thống', 'quantrivien'))
 
-    # Sửa phần chèn dữ liệu mẫu (Thêm số ngày vào cuối)
+    # Dữ liệu mẫu
     if c.execute('SELECT COUNT(*) FROM goidichvu').fetchone()[0] == 0:
         c.executemany('INSERT INTO goidichvu (maGoi, tenGoi, giaCuoc, moTa, thoiHan) VALUES (?, ?, ?, ?, ?)', 
                       [('SD_90', 'SD90', 90000, '45GB/Tháng. Mỗi ngày cộng 1,5GB.', 30), 
@@ -102,8 +108,6 @@ def get_db():
 # 2. XỬ LÝ LOGIC (Dựa trên Activity/Sequence Diagram)
 # ==========================================
 
-# Luồng Xem danh sách gói (Sequence Trang 12)
-@app.route('/')
 # Luồng Xem danh sách và Tìm kiếm gói (Trang 7, 12)
 @app.route('/')
 def index():
@@ -126,9 +130,6 @@ def index():
     
     # Truyền thêm biến tu_khoa ra giao diện để giữ lại chữ người dùng vừa gõ
     return render_template('index.html', goi_dich_vu=goi_dich_vu, tu_khoa=tu_khoa)
-# ==========================================
-# LUỒNG ĐĂNG NHẬP
-# ==========================================
 # ==========================================
 # LUỒNG ĐĂNG NHẬP
 # ==========================================
@@ -229,7 +230,6 @@ def reset_password():
             return redirect(url_for('login'))
 
     return render_template('reset_password.html')
-
 # ==========================================
 # LUỒNG ĐĂNG KÝ (Trang riêng)
 # ==========================================
@@ -267,8 +267,6 @@ def register():
         conn.close()
 
     return render_template('register.html')
-# Luồng Xem chi tiết & Tạo Đơn Hàng (Sequence Trang 13, 14)
-# Luồng Xem chi tiết & Tạo Đơn Hàng
 # Luồng Xem chi tiết, So sánh & Tạo Đơn Hàng
 @app.route('/package/<int:id>', methods=['GET', 'POST'])
 def detail(id):
