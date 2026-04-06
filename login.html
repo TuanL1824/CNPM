@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div style="max-width: 350px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);">
+        <h2 style="text-align: center; color: #333;">Đăng nhập</h2>
+        
+        <form method="POST" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px;">
+            <input type="text" name="username" placeholder="Tên đăng nhập" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            
+            <input type="password" name="password" placeholder="Mật khẩu" required style="padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+            
+            <div style="text-align: right;">
+                <a href="/forgot_password" style="font-size: 14px; color: #007bff; text-decoration: none;">Quên mật khẩu?</a>
+            </div>
+            
+            <button type="submit" style="background: #007bff; color: white; padding: 12px; font-size: 16px; border: none; border-radius: 4px; cursor: pointer;">Đăng nhập</button>
+        </form>
+
+        <p style="text-align: center; margin-top: 20px;">
+            Chưa có tài khoản? <a href="/register" style="color: #28a745; text-decoration: none;">Đăng ký tại đây</a>
+        </p>
+    </div>
+{% endblock %}

@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2 style="border-bottom: 2px solid #d32f2f; padding-bottom: 10px; margin-bottom: 20px;">Hồ Sơ Của Bạn</h2>
+
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 300px; background: #f8f9fa; padding: 20px; border-radius: 8px; border: 1px solid #ddd; height: fit-content;">
+            <h3 style="margin-top: 0; color: #333;">Thông tin tài khoản</h3>
+            <p><strong>Họ và tên:</strong> {{ user.hoTen }}</p>
+            <p><strong>Tên đăng nhập:</strong> {{ user.username }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            <p><strong>Số điện thoại:</strong> {{ user.soDienThoai }}</p>
+            
+            <a href="/" class="btn" style="background: #6c757d; margin-top: 15px; display: inline-block;">Quay lại Trang chủ</a>
+        </div>
+
+        <div style="flex: 2; min-width: 400px;">
+            <h3 style="margin-top: 0; color: #333;">Gói dịch vụ đang sử dụng / Lịch sử</h3>
+            
+            {% if packages %}
+                <table style="width: 100%; border-collapse: collapse; background: white;">
+                    <thead>
+                        <tr style="background: #333; color: white;">
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: left;">Tên gói</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Mã gói</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Ngày đăng ký</th>
+                            <th style="padding: 10px; border: 1px solid #ddd;">Trạng thái</th>
+                            <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for p in packages %}
+                        <tr>
+                            <td style="padding: 10px; border: 1px solid #ddd;"><strong>{{ p.tenGoi }}</strong></td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ p.maGoi }}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ p.ngayTao }}</td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                                {% if p.trangThai == 'Chờ thanh toán' %}
+                                    <span style="background: #ffc107; color: #000; padding: 3px 8px; border-radius: 12px; font-size: 13px;">Chờ thanh toán</span>
+                                {% else %}
+                                    <span style="background: #28a745; color: #fff; padding: 3px 8px; border-radius: 12px; font-size: 13px;">Đang hoạt động</span>
+                                {% endif %}
+                            </td>
+                            <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                                <a href="/cancel_order/{{ p.id }}" onclick="return confirm('Bạn có chắc chắn muốn hủy gói cước này không?');" style="background: #dc3545; color: white; padding: 4px 10px; border-radius: 4px; text-decoration: none; font-size: 13px;">Hủy</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="padding: 20px; background: #fff3cd; border-radius: 5px; color: #856404; text-align: center;">
+                    Bạn chưa đăng ký gói dịch vụ nào. <a href="/" style="font-weight: bold; color: #d32f2f;">Xem các gói cước ngay!</a>
+                </div>
+            {% endif %}
+        </div>
+        
+    </div>
+{% endblock %}

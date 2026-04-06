@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #d32f2f; padding-bottom: 10px; margin-bottom: 20px;">
+        <h2 style="margin: 0;">Bảng Điều Khiển Nhân Viên</h2>
+        <div>
+            <a href="/admin" class="btn" style="background: #17a2b8;">Quản lý Gói Cước</a>
+        </div>
+    </div>
+
+    <h3>Danh sách Khách hàng & Gói dịch vụ</h3>
+
+    {% for kh in khach_hang %}
+        <div style="background: white; padding: 20px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h4 style="margin: 0 0 10px 0; color: #d32f2f; font-size: 1.2em;">Khách hàng: {{ kh.hoTen }}</h4>
+                    <p style="margin: 0; color: #555;"><strong>Tài khoản:</strong> {{ kh.username }} | <strong>SĐT:</strong> {{ kh.soDienThoai }} | <strong>Email:</strong> {{ kh.email }}</p>
+                </div>
+                <a href="/admin/delete_user/{{ kh.id }}" onclick="return confirm('CẢNH BÁO: Xóa tài khoản này sẽ xóa toàn bộ đơn hàng của họ. Tiếp tục?');" class="btn" style="background: #dc3545; padding: 5px 10px; font-size: 14px;">Xóa Tài Khoản</a>
+            </div>
+
+            <hr style="border: 0; border-top: 1px dashed #ccc; margin: 15px 0;">
+
+            <p style="margin: 0 0 10px 0; font-weight: bold;">Các gói đang sử dụng:</p>
+            <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                <tr style="background: #f4f4f9;">
+                    <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Tên gói</th>
+                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Ngày đăng ký</th>
+                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Trạng thái</th>
+                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Thao tác</th>
+                </tr>
+                {% set count = 0 %}
+                {% for dh in don_hang %}
+                    {% if dh.user_id == kh.id %}
+                        {% set count = count + 1 %}
+                        <tr>
+                            <td style="padding: 8px; border: 1px solid #ddd;">{{ dh.tenGoi }}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{{ dh.ngayTao }}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{{ dh.trangThai }}</td>
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                <a href="/admin/delete_order/{{ dh.id }}" onclick="return confirm('Hủy gói cước này của khách?');" style="color: red; text-decoration: none; font-weight: bold;">Hủy gói</a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% endfor %}
+                {% if not don_hang | selectattr('user_id', 'equalto', kh.id) | list %}
+                    <tr><td colspan="4" style="padding: 8px; text-align: center; color: #888;">Khách hàng chưa đăng ký gói nào.</td></tr>
+                {% endif %}
+            </table>
+        </div>
+    {% else %}
+        <p>Hiện chưa có khách hàng nào trong hệ thống.</p>
+    {% endfor %}
+
+{% endblock %}

@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div style="display: flex; flex-wrap: wrap; gap: 30px;">
+        
+        <div style="flex: 1; min-width: 300px;">
+            <h2 style="color: #333;">Chi tiết: {{ goi.tenGoi }}</h2>
+            <p><strong>Mã Gói:</strong> {{ goi.maGoi }}</p>
+            <p><strong>Mô tả chi tiết:</strong> {{ goi.moTa }}</p>
+            <p><strong>Giá cước:</strong> <span style="color: red; font-weight: bold; font-size: 1.2em;">{{ "{:,.0f}".format(goi.giaCuoc) }} VNĐ</span></p>
+            
+            <form method="POST" style="margin-top: 25px;">
+                <button type="submit" style="font-size: 1.1em; padding: 12px 25px; background: #28a745;">Đăng ký & Tạo đơn hàng</button>
+            </form>
+            
+            <div style="margin-top: 20px;">
+                <a href="/" style="color: #555; text-decoration: none;">&larr; Quay lại danh sách</a>
+            </div>
+        </div>
+
+        <div style="flex: 1.5; min-width: 400px; background: #f8f9fa; padding: 25px; border-radius: 8px; border: 1px solid #ddd;">
+            <h3 style="margin-top: 0; color: #d32f2f;">So sánh với gói dịch vụ khác</h3>
+            
+            <form method="GET" style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <select name="compare_with" required style="padding: 10px; flex: 1; border: 1px solid #ccc; border-radius: 4px; font-size: 14px;">
+                    <option value="">-- Chọn gói cước để so sánh --</option>
+                    {% for g in cac_goi_khac %}
+                        <option value="{{ g.id }}" {% if goi_so_sanh and goi_so_sanh.id == g.id %}selected{% endif %}>
+                            {{ g.tenGoi }}
+                        </option>
+                    {% endfor %}
+                </select>
+                <button type="submit" style="background: #17a2b8; padding: 0 20px;">So sánh ngay</button>
+            </form>
+
+            {% if goi_so_sanh %}
+                <table style="width: 100%; border-collapse: collapse; background: white; text-align: left; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                    <tr>
+                        <th style="padding: 12px; border: 1px solid #ddd; width: 20%; background: #eee;">Tiêu chí</th>
+                        <th style="padding: 12px; border: 1px solid #ddd; width: 40%; color: #007bff;">{{ goi.tenGoi }} (Đang xem)</th>
+                        <th style="padding: 12px; border: 1px solid #ddd; width: 40%; color: #28a745;">{{ goi_so_sanh.tenGoi }}</th>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #fafafa;">Giá cước</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; color: red; font-weight: bold;">{{ "{:,.0f}".format(goi.giaCuoc) }}đ</td>
+                        <td style="padding: 12px; border: 1px solid #ddd; color: red; font-weight: bold;">{{ "{:,.0f}".format(goi_so_sanh.giaCuoc) }}đ</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #fafafa;">Mô tả</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">{{ goi.moTa }}</td>
+                        <td style="padding: 12px; border: 1px solid #ddd;">{{ goi_so_sanh.moTa }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold; background: #fafafa;">Chênh lệch</td>
+                        <td colspan="2" style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold; background: #fff3cd; color: #856404;">
+                            {% set diff = goi.giaCuoc - goi_so_sanh.giaCuoc %}
+                            {% if diff > 0 %}
+                                Gói đang xem ĐẮT HƠN gói kia {{ "{:,.0f}".format(diff) }} VNĐ
+                            {% elif diff < 0 %}
+                                Gói đang xem RẺ HƠN gói kia {{ "{:,.0f}".format(diff * -1) }} VNĐ
+                            {% else %}
+                                Hai gói có giá bằng nhau
+                            {% endif %}
+                        </td>
+                    </tr>
+                </table>
+            {% else %}
+                <div style="text-align: center; color: #777; font-style: italic; margin-top: 30px;">
+                    Vui lòng chọn một gói dịch vụ từ menu bên trên để xem bảng so sánh chi tiết.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

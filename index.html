@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h2>Danh sách Gói Dịch Vụ</h2>
+        
+        <form method="GET" action="/" style="display: flex; gap: 10px;">
+            <input type="text" name="q" value="{{ tu_khoa }}" placeholder="Nhập tên hoặc mã gói..." style="padding: 8px; width: 250px; border: 1px solid #ccc; border-radius: 4px;">
+            <button type="submit" style="background: #17a2b8;">Tìm kiếm</button>
+            {% if tu_khoa %}
+                <a href="/" class="btn" style="background: #6c757d; line-height: 18px;">Hủy tìm</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+        {% if goi_dich_vu %}
+            {% for goi in goi_dich_vu %}
+                <div style="border: 1px solid #ccc; padding: 15px; border-radius: 5px; width: 30%; background: white;">
+                    <h3 style="margin-top: 0;">{{ goi.tenGoi }}</h3>
+                    <p><strong>Mã:</strong> {{ goi.maGoi }}</p>
+                    <p style="color: red; font-weight: bold; font-size: 1.1em;">{{ "{:,.0f}".format(goi.giaCuoc) }} VNĐ</p>
+                    <a href="/package/{{ goi.id }}" class="btn">Xem chi tiết</a>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="width: 100%; text-align: center; padding: 40px; background: #fff3cd; border-radius: 5px; color: #856404;">
+                Không tìm thấy gói dịch vụ nào phù hợp với từ khóa <strong>"{{ tu_khoa }}"</strong>.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}
