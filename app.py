@@ -79,7 +79,7 @@ def init_db():
     if not admin_exist:
         hashed_pw = generate_password_hash("123456") # Mật khẩu mặc định là 123456
         c.execute("INSERT INTO taikhoan (username, password_hash, hoTen, role) VALUES (?, ?, ?, ?)", 
-                  ('admin', hashed_pw, 'Quản Trị Viên', 'nhanvien'))
+                  ('nv01', hashed_pw, 'Nhân viên 01', 'nhanvien'))
     # TỰ ĐỘNG TẠO TÀI KHOẢN SIÊU QUẢN TRỊ VIÊN (Super Admin)
     superadmin_exist = c.execute("SELECT * FROM taikhoan WHERE username = 'AdminOffical'").fetchone()
     if not superadmin_exist:
