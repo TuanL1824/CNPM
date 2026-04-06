@@ -7,6 +7,31 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = 'khoa_bao_mat_he_thong_dich_vu'
 
+def cleanup_expired_orders():
+    conn = get_db()
+    # Lấy tất cả đơn hàng đang 'Chờ thanh toán'
+    orders = conn.execute("SELECT id, ngayTao FROM donhang WHERE trangThai = 'Chờ thanh toán'").fetchall()
+    
+    from datetime import datetime
+    bay_gio = datetime.now()
+    
+    for order in orders:
+        try:
+            # Chuyển chuỗi ngàyTao (định dạng dd/mm/yyyy HH:MM:SS) về đối tượng datetime
+            ngay_tao_dt = datetime.strptime(order['ngayTao'], "%d/%m/%Y %H:%M:%S")
+            
+            # Tính khoảng cách thời gian (giây)
+            khoang_cach = (bay_gio - ngay_tao_dt).total_seconds()
+            
+            # Nếu quá 300 giây (5 phút)
+            if khoang_cach > 300:
+                conn.execute("UPDATE donhang SET trangThai = 'Giao dịch thất bại' WHERE id = ?", (order['id'],))
+        except:
+            pass # Bỏ qua nếu định dạng ngày cũ không khớp
+            
+    conn.commit()
+    conn.close()
+
 # ==========================================
 # 1. DATABASE SCHEMA (Dựa trên Class Diagram)
 # ==========================================
@@ -23,9 +48,24 @@ def init_db():
                   hoTen TEXT,
                   soDienThoai TEXT,
                   role TEXT DEFAULT 'khachhang')''')
+    # Bảng Lưu trữ tin nhắn Hỗ trợ / Chat (Từ lược đồ PhieuHoTro)
+    c.execute('''CREATE TABLE IF NOT EXISTS ho_tro 
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                  user_id INTEGER, 
+                  nguoi_gui TEXT, 
+                  noi_dung TEXT, 
+                  thoi_gian DATETIME,
+                  FOREIGN KEY(user_id) REFERENCES taikhoan(id))''')
                   
     # Tạo bảng goidichvu và donhang (Giữ nguyên như cũ của bạn)
-    c.execute('''CREATE TABLE IF NOT EXISTS goidichvu (id INTEGER PRIMARY KEY AUTOINCREMENT, maGoi TEXT UNIQUE NOT NULL, tenGoi TEXT NOT NULL, giaCuoc REAL NOT NULL, moTa TEXT)''')
+    # Sửa lệnh tạo bảng goidichvu (Thêm cột thoiHan INTEGER)
+    c.execute('''CREATE TABLE IF NOT EXISTS goidichvu 
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                  maGoi TEXT UNIQUE NOT NULL, 
+                  tenGoi TEXT NOT NULL, 
+                  giaCuoc REAL NOT NULL, 
+                  moTa TEXT,
+                  thoiHan INTEGER DEFAULT 30)''')
     c.execute('''CREATE TABLE IF NOT EXISTS donhang (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, goidichvu_id INTEGER, ngayTao DATETIME DEFAULT CURRENT_TIMESTAMP, trangThai TEXT DEFAULT 'Chờ thanh toán', tongTien REAL, FOREIGN KEY(user_id) REFERENCES taikhoan(id), FOREIGN KEY(goidichvu_id) REFERENCES goidichvu(id))''')
 
     # TỰ ĐỘNG TẠO TÀI KHOẢN NHÂN VIÊN MẶC ĐỊNH
@@ -34,10 +74,19 @@ def init_db():
         hashed_pw = generate_password_hash("123456") # Mật khẩu mặc định là 123456
         c.execute("INSERT INTO taikhoan (username, password_hash, hoTen, role) VALUES (?, ?, ?, ?)", 
                   ('admin', hashed_pw, 'Quản Trị Viên', 'nhanvien'))
+    # TỰ ĐỘNG TẠO TÀI KHOẢN SIÊU QUẢN TRỊ VIÊN (Super Admin)
+    superadmin_exist = c.execute("SELECT * FROM taikhoan WHERE username = 'AdminOffical'").fetchone()
+    if not superadmin_exist:
+        hashed_pw = generate_password_hash("123456") 
+        c.execute("INSERT INTO taikhoan (username, password_hash, hoTen, role) VALUES (?, ?, ?, ?)", 
+                  ('AdminOffical', hashed_pw, 'Tổng Quản Trị Hệ Thống', 'quantrivien'))
 
-    # Thêm dữ liệu gói dịch vụ mẫu... (Giữ nguyên)
+    # Sửa phần chèn dữ liệu mẫu (Thêm số ngày vào cuối)
     if c.execute('SELECT COUNT(*) FROM goidichvu').fetchone()[0] == 0:
-        c.executemany('INSERT INTO goidichvu (maGoi, tenGoi, giaCuoc, moTa) VALUES (?, ?, ?, ?)', [('GOI_CB', 'Gói Cơ Bản', 50000, 'Nhận được 90GB/tháng. Cộng 3GB mỗi ngày'), ('GOI_PRO', 'Gói Chuyên Nghiệp', 150000, 'Truy cập mạng xã hội (facebook, youtube...) tẹt ga trong một tháng. Cộng 3GB mỗi ngày'), ('GOI_VIP', 'Gói VIP', 300000, 'Không giới hạn truy cập mạng trong một tháng, thích làm gì thì làm.')])
+        c.executemany('INSERT INTO goidichvu (maGoi, tenGoi, giaCuoc, moTa, thoiHan) VALUES (?, ?, ?, ?, ?)', 
+                      [('SD_90', 'SD90', 90000, '45GB/Tháng. Mỗi ngày cộng 1,5GB.', 30), 
+                       ('SD_120', 'SD120', 120000, '60GB /tháng. Cộng 2GB mỗi ngày.', 30), 
+                       ('SD_135', 'SD135', 135000, '150GB /tháng. Cộng 5GB mỗi ngày.', 30)])
         
     conn.commit()
     conn.close()
@@ -103,7 +152,9 @@ def login():
             session['role'] = user['role'] # LƯU ROLE VÀO SESSION
 
             # 4. ĐIỀU HƯỚNG DỰA TRÊN ROLE
-            if user['role'] == 'nhanvien':
+            if user['role'] == 'quantrivien':
+                return redirect(url_for('superadmin_dashboard')) # Chuyển đến trang Cấp cao
+            elif user['role'] == 'nhanvien':
                 return redirect(url_for('admin_users')) # Chuyển đến trang nhân viên
             else:
                 return redirect(url_for('index')) # Chuyển đến trang khách hàng
@@ -256,6 +307,7 @@ def detail(id):
 # ==========================================
 @app.route('/profile')
 def profile():
+    cleanup_expired_orders()
     # Kiểm tra bảo mật: Chưa đăng nhập thì không cho vào
     if 'user_id' not in session:
         flash('Vui lòng đăng nhập để xem thông tin tài khoản!', 'warning')
@@ -301,6 +353,7 @@ def cancel_order(order_id):
 # ==========================================
 @app.route('/admin/users')
 def admin_users():
+    cleanup_expired_orders()
     # Kiểm tra bảo mật: Chỉ nhân viên mới được vào
     if session.get('role') != 'nhanvien':
         flash('Bạn không có quyền truy cập trang này!', 'danger')
@@ -344,10 +397,201 @@ def admin_delete_order(order_id):
     conn.close()
     flash('Đã hủy gói dịch vụ của khách!', 'success')
     return redirect(url_for('admin_users'))
+
+@app.route('/admin/confirm_order/<int:order_id>')
+def admin_confirm_order(order_id):
+    # Kiểm tra quyền nhân viên
+    if session.get('role') != 'nhanvien': return redirect(url_for('index'))
+    
+    conn = get_db()
+    # Lệnh UPDATE để đổi trạng thái đơn hàng
+    conn.execute("UPDATE donhang SET trangThai = 'Đang hoạt động' WHERE id = ?", (order_id,))
+    conn.commit()
+    conn.close()
+    
+    flash('Đã xác nhận thanh toán và kích hoạt gói cước cho khách!', 'success')
+    return redirect(url_for('admin_users'))
+# ==========================================
+# LUỒNG CHAT KHÁCH HÀNG (Gửi khiếu nại)
+# ==========================================
+@app.route('/support', methods=['GET', 'POST'])
+def support():
+    # Chỉ khách hàng mới được dùng trang này
+    if 'user_id' not in session or session.get('role') == 'nhanvien':
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    if request.method == 'POST':
+        noi_dung = request.form['noi_dung']
+        if noi_dung.strip():
+            from datetime import datetime
+            thoi_gian_thuc = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            # Lưu tin nhắn với người gửi là 'khachhang'
+            conn.execute('INSERT INTO ho_tro (user_id, nguoi_gui, noi_dung, thoi_gian) VALUES (?, ?, ?, ?)',
+                         (session['user_id'], 'khachhang', noi_dung, thoi_gian_thuc))
+            conn.commit()
+            return redirect(url_for('support'))
+            
+    # Lấy toàn bộ lịch sử chat của khách hàng này
+    messages = conn.execute('SELECT * FROM ho_tro WHERE user_id = ? ORDER BY id ASC', (session['user_id'],)).fetchall()
+    conn.close()
+    return render_template('support.html', messages=messages)
+
+# ==========================================
+# LUỒNG CHAT NHÂN VIÊN (Quản lý khiếu nại)
+# ==========================================
+@app.route('/admin/support')
+def admin_support():
+    if session.get('role') != 'nhanvien': return redirect(url_for('index'))
+    conn = get_db()
+    # Lấy danh sách các khách hàng đã từng nhắn tin
+    khach_hang_chat = conn.execute('''
+        SELECT DISTINCT t.id, t.hoTen, t.username, t.soDienThoai
+        FROM taikhoan t JOIN ho_tro h ON t.id = h.user_id
+    ''').fetchall()
+    conn.close()
+    return render_template('admin_support.html', khach_hang=khach_hang_chat)
+
+@app.route('/admin/support/<int:user_id>', methods=['GET', 'POST'])
+def admin_chat(user_id):
+    if session.get('role') != 'nhanvien': return redirect(url_for('index'))
+    conn = get_db()
+    
+    if request.method == 'POST':
+        noi_dung = request.form['noi_dung']
+        if noi_dung.strip():
+            from datetime import datetime
+            thoi_gian_thuc = datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            # Lưu tin nhắn phản hồi với người gửi là 'nhanvien'
+            conn.execute('INSERT INTO ho_tro (user_id, nguoi_gui, noi_dung, thoi_gian) VALUES (?, ?, ?, ?)',
+                         (user_id, 'nhanvien', noi_dung, thoi_gian_thuc))
+            conn.commit()
+            return redirect(url_for('admin_chat', user_id=user_id))
+            
+    # Lấy lịch sử chat của khách hàng được chọn
+    messages = conn.execute('SELECT * FROM ho_tro WHERE user_id = ? ORDER BY id ASC', (user_id,)).fetchall()
+    khach_hang = conn.execute('SELECT * FROM taikhoan WHERE id = ?', (user_id,)).fetchone()
+    conn.close()
+    return render_template('admin_chat.html', messages=messages, khach_hang=khach_hang)
+# ==========================================
+# LUỒNG QUẢN TRỊ VIÊN CẤP CAO (Super Admin)
+# ==========================================
+@app.route('/superadmin')
+def superadmin_dashboard():
+    if session.get('role') != 'quantrivien': return redirect(url_for('login'))
+    conn = get_db()
+    nhan_vien = conn.execute("SELECT * FROM taikhoan WHERE role = 'nhanvien'").fetchall()
+    # LẤY THÊM DÒNG NÀY:
+    goi_dich_vu = conn.execute("SELECT * FROM goidichvu").fetchall() 
+    conn.close()
+    return render_template('superadmin.html', nhan_vien=nhan_vien, goi_dich_vu=goi_dich_vu)
+
+@app.route('/superadmin/add_employee', methods=['POST'])
+def add_employee():
+    if session.get('role') != 'quantrivien': return redirect(url_for('login'))
+    
+    username = request.form['username']
+    password = request.form['password']
+    hoTen = request.form['hoTen']
+    
+    conn = get_db()
+    # Kiểm tra xem tên đăng nhập đã trùng chưa
+    user_exist = conn.execute("SELECT * FROM taikhoan WHERE username = ?", (username,)).fetchone()
+    
+    if user_exist:
+        flash('Tên đăng nhập này đã tồn tại, vui lòng chọn tên khác!', 'danger')
+    else:
+        # Băm mật khẩu và lưu nhân viên mới
+        hashed_pw = generate_password_hash(password)
+        conn.execute("INSERT INTO taikhoan (username, password_hash, hoTen, role) VALUES (?, ?, ?, ?)",
+                     (username, hashed_pw, hoTen, 'nhanvien'))
+        conn.commit()
+        flash(f'Đã tạo tài khoản nhân viên cho {hoTen} thành công!', 'success')
+        
+    conn.close()
+    return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/delete_employee/<int:emp_id>')
+def delete_employee(emp_id):
+    if session.get('role') != 'quantrivien': return redirect(url_for('login'))
+    
+    conn = get_db()
+    conn.execute("DELETE FROM taikhoan WHERE id = ?", (emp_id,))
+    conn.commit()
+    conn.close()
+    flash('Đã xóa tài khoản nhân viên thành công!', 'success')
+    return redirect(url_for('superadmin_dashboard'))
+# ==========================================
+# QUẢN TRỊ VIÊN: QUẢN LÝ GÓI DỊCH VỤ (CRUD)
+# ==========================================
+
+# 1. Thêm gói mới
+@app.route('/superadmin/add_package', methods=['POST'])
+def admin_add_package():
+    if session.get('role') != 'quantrivien': return redirect(url_for('login'))
+    
+    tenGoi = request.form['tenGoi']
+    maGoi = request.form['maGoi']
+    moTa = request.form['moTa']
+    giaCuoc = request.form['giaCuoc']
+    thoiHan = request.form['thoiHan'] # LẤY THỜI HẠN
+    
+    conn = get_db()
+    try:
+        conn.execute('INSERT INTO goidichvu (maGoi, tenGoi, giaCuoc, moTa, thoiHan) VALUES (?, ?, ?, ?, ?)',
+                     (maGoi, tenGoi, giaCuoc, moTa, thoiHan))
+        conn.commit()
+        flash('Đã thêm gói dịch vụ mới thành công!', 'success')
+    except:
+        flash('Lỗi: Mã gói này đã tồn tại!', 'danger')
+    conn.close()
+    return redirect(url_for('superadmin_dashboard'))
+
+# 2. Xóa gói
+@app.route('/superadmin/delete_package/<int:package_id>')
+def admin_delete_package(package_id):
+    if session.get('role') != 'quantrivien': return redirect(url_for('login'))
+    
+    conn = get_db()
+    # Kiểm tra xem có đơn hàng nào đang dùng gói này không để tránh lỗi dữ liệu
+    check = conn.execute('SELECT COUNT(*) FROM donhang WHERE goidichvu_id = ?', (package_id,)).fetchone()[0]
+    if check > 0:
+        flash('Không thể xóa gói này vì đã có khách hàng đăng ký!', 'danger')
+    else:
+        conn.execute('DELETE FROM goidichvu WHERE id = ?', (package_id,))
+        conn.commit()
+        flash('Đã xóa gói dịch vụ!', 'success')
+    conn.close()
+    return redirect(url_for('superadmin_dashboard'))
+
+# 3. Trang Chỉnh sửa gói (Giao diện sửa)
+@app.route('/superadmin/edit_package/<int:package_id>', methods=['GET', 'POST'])
+def admin_edit_package(package_id):
+    if session.get('role') != 'quantrivien': return redirect(url_for('login'))
+    
+    conn = get_db()
+    if request.method == 'POST':
+        tenGoi = request.form['tenGoi']
+        maGoi = request.form['maGoi']
+        moTa = request.form['moTa']
+        giaCuoc = request.form['giaCuoc']
+        thoiHan = request.form['thoiHan'] # LẤY THỜI HẠN
+        
+        conn.execute('UPDATE goidichvu SET tenGoi=?, maGoi=?, giaCuoc=?, moTa=?, thoiHan=? WHERE id=?',
+                     (tenGoi, maGoi, giaCuoc, moTa, thoiHan, package_id))
+        conn.commit()
+        conn.close()
+        flash('Đã cập nhật thông tin gói cước!', 'success')
+        return redirect(url_for('superadmin_dashboard'))
+    
+    package = conn.execute('SELECT * FROM goidichvu WHERE id = ?', (package_id,)).fetchone()
+    conn.close()
+    return render_template('edit_package.html', package=package)
 @app.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    # Thêm host='0.0.0.0' để cho phép các máy khác trong mạng truy cập
+    app.run(host='0.0.0.0', debug=True, port=5000)

@@ -27,6 +27,7 @@
                     <th style="padding: 8px; border: 1px solid #ddd; text-align: left;">Tên gói</th>
                     <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Ngày đăng ký</th>
                     <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Trạng thái</th>
+                    <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Xác nhận</th>
                     <th style="padding: 8px; border: 1px solid #ddd; text-align: center;">Thao tác</th>
                 </tr>
                 {% set count = 0 %}
@@ -36,7 +37,23 @@
                         <tr>
                             <td style="padding: 8px; border: 1px solid #ddd;">{{ dh.tenGoi }}</td>
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{{ dh.ngayTao }}</td>
-                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">{{ dh.trangThai }}</td>
+            
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                {% if dh.trangThai == 'Chờ thanh toán' %}
+                                    <span style="color: #ffc107; font-weight: bold;">{{ dh.trangThai }}</span>
+                                {% else %}
+                                    <span style="color: #28a745; font-weight: bold;">{{ dh.trangThai }}</span>
+                                {% endif %}
+                            </td>
+            
+                            <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
+                                {% if dh.trangThai == 'Chờ thanh toán' %}
+                                    <a href="/admin/confirm_order/{{ dh.id }}" class="btn" style="background: #28a745; padding: 4px 10px; font-size: 13px; text-decoration: none; color: white;">Duyệt</a>
+                                {% else %}
+                                    <span style="color: #888; font-size: 13px;">Đã duyệt</span>
+                                {% endif %}
+                            </td>
+
                             <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">
                                 <a href="/admin/delete_order/{{ dh.id }}" onclick="return confirm('Hủy gói cước này của khách?');" style="color: red; text-decoration: none; font-weight: bold;">Hủy gói</a>
                             </td>

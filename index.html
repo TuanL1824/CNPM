@@ -19,6 +19,7 @@
                     <h3 style="margin-top: 0;">{{ goi.tenGoi }}</h3>
                     <p><strong>Mã:</strong> {{ goi.maGoi }}</p>
                     <p style="color: red; font-weight: bold; font-size: 1.1em;">{{ "{:,.0f}".format(goi.giaCuoc) }} VNĐ</p>
+                    <p><strong>Thời hạn:</strong> {{ goi.thoiHan }} ngày</p>
                     <a href="/package/{{ goi.id }}" class="btn">Xem chi tiết</a>
                 </div>
             {% endfor %}

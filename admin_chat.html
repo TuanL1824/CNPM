@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h2 style="color: #333; margin: 0;">Đang hỗ trợ: <span style="color: #d32f2f;">{{ khach_hang.hoTen }}</span></h2>
+        <a href="/admin/support" class="btn" style="background: #6c757d;">Trở lại danh sách</a>
+    </div>
+
+    <div style="border: 1px solid #ccc; border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; height: 500px; background: #fff;">
+        <div id="chat-box" style="flex: 1; padding: 20px; overflow-y: auto; background: #e9ecef; display: flex; flex-direction: column; gap: 15px;">
+            {% for msg in messages %}
+                {% if msg.nguoi_gui == 'nhanvien' %}
+                    <div style="align-self: flex-end; background: #d32f2f; color: white; padding: 10px 15px; border-radius: 15px 15px 0 15px; max-width: 70%;">
+                        <div style="margin-bottom: 5px;">{{ msg.noi_dung }}</div>
+                        <div style="font-size: 11px; opacity: 0.8; text-align: right;">{{ msg.thoi_gian }}</div>
+                    </div>
+                {% else %}
+                    <div style="align-self: flex-start; background: white; color: #333; padding: 10px 15px; border-radius: 15px 15px 15px 0; max-width: 70%; border: 1px solid #ddd;">
+                        <div style="margin-bottom: 5px;">{{ msg.noi_dung }}</div>
+                        <div style="font-size: 11px; color: #888;">{{ msg.thoi_gian }}</div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+
+        <form method="POST" style="display: flex; padding: 15px; background: white; border-top: 1px solid #ddd;">
+            <input type="text" name="noi_dung" placeholder="Nhập phản hồi cho khách..." required style="flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 20px; outline: none;">
+            <button type="submit" style="background: #28a745; color: white; border: none; padding: 0 25px; margin-left: 10px; border-radius: 20px; cursor: pointer; font-weight: bold;">Gửi phản hồi</button>
+        </form>
+    </div>
+
+    <script>
+        var chatBox = document.getElementById("chat-box");
+        
+        // 1. Tự động cuộn xuống cuối khi mới mở trang
+        chatBox.scrollTop = chatBox.scrollHeight;
+
+        // 2. TỰ ĐỘNG CẬP NHẬT TIN NHẮN (AJAX Polling)
+        // Cứ mỗi 3 giây (3000 mili-giây), hàm này sẽ chạy ngầm 1 lần
+        setInterval(function() {
+            // Tải ngầm dữ liệu của chính trang web hiện tại
+            fetch(window.location.href) 
+            .then(response => response.text())
+            .then(html => {
+                // Phân tích mã HTML mới vừa tải về
+                let parser = new DOMParser();
+                let doc = parser.parseFromString(html, "text/html");
+                
+                // Trích xuất riêng nội dung của khu vực chat mới
+                let newChatContent = doc.getElementById("chat-box").innerHTML;
+                
+                // So sánh, nếu có tin nhắn mới (nội dung thay đổi) thì mới cập nhật
+                if (chatBox.innerHTML !== newChatContent) {
+                    chatBox.innerHTML = newChatContent;       // Chèn tin nhắn mới vào màn hình
+                    chatBox.scrollTop = chatBox.scrollHeight; // Cuộn màn hình xuống cuối cùng
+                }
+            });
+        }, 3000); 
+    </script>
+{% endblock %}

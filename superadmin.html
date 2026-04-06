@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2 style="color: #343a40; border-bottom: 3px solid #343a40; padding-bottom: 10px;">BẢNG ĐIỀU KHIỂN TỔNG QUẢN TRỊ</h2>
+    
+    <div style="display: flex; gap: 30px; margin-top: 20px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 300px; background: #f8f9fa; padding: 25px; border-radius: 8px; border: 1px solid #ddd; height: fit-content;">
+            <h3 style="margin-top: 0; color: #d32f2f;">Cấp tài khoản Nhân Viên</h3>
+            <form action="/superadmin/add_employee" method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+                <div>
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Họ và Tên nhân viên:</label>
+                    <input type="text" name="hoTen" required placeholder="Nhập họ tên thật..." style="width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;">
+                </div>
+                <div>
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Tên đăng nhập (Username):</label>
+                    <input type="text" name="username" required placeholder="Ví dụ: nv_tuan" style="width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;">
+                </div>
+                <div>
+                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Mật khẩu cấp phát:</label>
+                    <input type="text" name="password" required placeholder="Nhập mật khẩu..." style="width: 100%; padding: 10px; box-sizing: border-box; border-radius: 4px; border: 1px solid #ccc;">
+                </div>
+                <button type="submit" style="background: #28a745; font-size: 16px; padding: 12px; margin-top: 10px; font-weight: bold;">+ Thêm Nhân Viên Mới</button>
+            </form>
+        </div>
+
+        <div style="flex: 2; min-width: 400px;">
+            <h3 style="margin-top: 0; color: #343a40;">Danh sách Nhân viên hiện tại</h3>
+            
+            <table style="width: 100%; border-collapse: collapse; background: white; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+                <tr style="background: #343a40; color: white;">
+                    <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">ID</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Họ Tên</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; text-align: left;">Tên đăng nhập</th>
+                    <th style="padding: 12px; border: 1px solid #ddd; text-align: center;">Thao tác</th>
+                </tr>
+                {% for nv in nhan_vien %}
+                <tr>
+                    <td style="padding: 12px; border: 1px solid #ddd;"><strong>#{{ nv.id }}</strong></td>
+                    <td style="padding: 12px; border: 1px solid #ddd;">{{ nv.hoTen }}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; color: #007bff;">{{ nv.username }}</td>
+                    <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">
+                        <a href="/superadmin/delete_employee/{{ nv.id }}" onclick="return confirm('Cảnh báo: Bạn có chắc chắn muốn XÓA nhân viên này khỏi hệ thống không?');" class="btn" style="background: #dc3545; padding: 5px 12px; text-decoration: none; font-size: 14px;">Thu hồi tài khoản</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="padding: 20px; text-align: center; color: #888;">Hệ thống hiện chưa có nhân viên nào.</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        
+    </div>
+    <hr style="margin: 40px 0; border-top: 2px solid #ddd;">
+
+    <h2 style="color: #343a40;">QUẢN LÝ DANH MỤC GÓI CƯỚC</h2>
+    <div style="display: flex; gap: 30px; flex-wrap: wrap;">
+        
+        <div style="flex: 1; min-width: 300px; background: #fff3cd; padding: 25px; border-radius: 8px; border: 1px solid #ffeeba; height: fit-content;">
+            <h3 style="margin-top: 0; color: #856404;">Thêm Gói Cước Mới</h3>
+            <form action="/superadmin/add_package" method="POST" style="display: flex; flex-direction: column; gap: 12px;">
+                <input type="text" name="tenGoi" placeholder="Tên gói (VD: Gói Siêu Cấp)" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
+                <input type="text" name="maGoi" placeholder="Mã gói (VD: GOI_PRO)" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
+                <input type="number" name="giaCuoc" placeholder="Giá tiền (VNĐ)" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
+                <input type="number" name="thoiHan" placeholder="Thời hạn sử dụng (Số ngày)" required style="padding: 10px; border-radius: 4px; border: 1px solid #ccc;">
+                <textarea name="moTa" placeholder="Mô tả gói dịch vụ..." rows="3" style="padding: 10px; border-radius: 4px; border: 1px solid #ccc;"></textarea>
+                <button type="submit" style="background: #ffc107; color: #000; font-weight: bold; padding: 12px;">+ Lưu Gói Mới</button>
+            </form>
+        </div>
+
+        <div style="flex: 2; min-width: 400px;">
+            <table style="width: 100%; border-collapse: collapse; background: white; font-size: 14px;">
+                <tr style="background: #e9ecef;">
+                    <th style="padding: 10px; border: 1px solid #ddd;">Tên gói</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Giá</th>
+                    <th style="padding: 10px; border: 1px solid #ddd;">Thời hạn</th> <th style="padding: 10px; border: 1px solid #ddd;">Mã</th>
+                    <th style="padding: 10px; border: 1px solid #ddd; text-align: center;">Thao tác</th>
+                </tr>
+                {% for g in goi_dich_vu %}
+                <tr>
+                    <td style="padding: 10px; border: 1px solid #ddd;"><strong>{{ g.tenGoi }}</strong></td>
+                    <td style="padding: 10px; border: 1px solid #ddd; color: red; font-weight: bold;">{{ "{:,.0f}".format(g.giaCuoc) }}đ</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">{{ g.thoiHan }} ngày</td> <td style="padding: 10px; border: 1px solid #ddd;">{{ g.maGoi }}</td>
+                    <td style="padding: 10px; border: 1px solid #ddd; text-align: center;">
+                        <a href="/superadmin/edit_package/{{ g.id }}" style="color: blue; text-decoration: none; margin-right: 10px;">Sửa</a>
+                        <a href="/superadmin/delete_package/{{ g.id }}" onclick="return confirm('Xóa gói này?');" style="color: red; text-decoration: none;">Xóa</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endblock %}

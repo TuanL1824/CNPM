@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block content %}
+    <h2 style="color: #d32f2f; margin-top: 0;">Quản lý Phiếu Hỗ Trợ / Chat</h2>
+    <p>Danh sách các khách hàng đang yêu cầu hỗ trợ:</p>
+
+    <div style="display: flex; flex-direction: column; gap: 15px;">
+        {% for kh in khach_hang %}
+            <div style="background: white; padding: 15px 20px; border-radius: 8px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">{{ kh.hoTen }}</h4>
+                    <span style="font-size: 14px; color: #555;">SĐT: {{ kh.soDienThoai }} | Username: {{ kh.username }}</span>
+                </div>
+                <a href="/admin/support/{{ kh.id }}" class="btn" style="background: #17a2b8;">Mở khung Chat</a>
+            </div>
+        {% else %}
+            <div style="text-align: center; padding: 30px; background: #fff3cd; color: #856404; border-radius: 5px;">Chưa có yêu cầu hỗ trợ nào từ khách hàng.</div>
+        {% endfor %}
+    </div>
+    
+    <div style="margin-top: 20px;">
+        <a href="/admin/users" class="btn" style="background: #6c757d;">Quay lại Bảng điều khiển</a>
+    </div>
+{% endblock %}

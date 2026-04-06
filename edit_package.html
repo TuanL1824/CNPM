@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div style="max-width: 500px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; margin-top: 0;">Chỉnh sửa Gói Dịch Vụ</h2>
+        <form method="POST" style="display: flex; flex-direction: column; gap: 15px;">
+            <label>Tên gói:</label>
+            <input type="text" name="tenGoi" value="{{ package.tenGoi }}" required style="padding: 10px;">
+            
+            <label>Mã gói:</label>
+            <input type="text" name="maGoi" value="{{ package.maGoi }}" required style="padding: 10px;">
+            
+            <label>Giá tiền (VNĐ):</label>
+            <input type="number" name="giaCuoc" value="{{ package.giaCuoc }}" required style="padding: 10px;">
+
+            <label>Thời hạn sử dụng (Tính bằng ngày):</label>
+            <input type="number" name="thoiHan" value="{{ package.thoiHan }}" required style="padding: 10px;">
+            
+            <label>Mô tả:</label>
+            <textarea name="moTa" rows="4" style="padding: 10px;">{{ package.moTa }}</textarea>
+            
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button type="submit" style="background: #28a745; flex: 1;">Lưu thay đổi</button>
+                <a href="/superadmin" class="btn" style="background: #6c757d; flex: 1; text-align: center;">Hủy bỏ</a>
+            </div>
+        </form>
+    </div>
+{% endblock %}

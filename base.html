@@ -27,9 +27,14 @@
         <div>
             <a href="/">Trang chủ</a>
             {% if session.username %}
-                {% if session.role == 'nhanvien' %}
+                {% if session.role == 'quantrivien' %}
+                    <a href="/superadmin" style="color: #ffc107; font-weight: bold;">Quản trị Hệ Thống</a>
+                    <span style="color: white; margin-left: 15px;">Xin chào Sếp</span>
+                {% elif session.role == 'nhanvien' %}
+                    <a href="/admin/support" style="color: white;">Hỗ trợ Khách hàng</a>
                     <a href="/admin/users" style="color: #ffc107;">Xin chào Nhân viên</a>
                 {% else %}
+                    <a href="/support" style="color: white;">Liên hệ Hỗ trợ</a>
                     <a href="/profile">Xin chào, {{ session.ho_ten }}</a>
                 {% endif %}
                 <a href="/logout">Đăng xuất</a>
